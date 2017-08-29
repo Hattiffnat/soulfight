@@ -86,6 +86,7 @@ class Environment(ShowBase):
 		lights_params = []
 		with open(path + 'lights.txt', 'r') as lights_file:
 			for line in lights_file:
+				if line[0] == '#': continue
 				lights_params.append(json.loads(line))
 
 		for light_param in lights_params:
@@ -93,13 +94,13 @@ class Environment(ShowBase):
 			if   light_param[0] == 'pl':		
 				 self.typelight = PointLight('pl')
 				 self.lamp = render.attachNewNode(self.typelight)
-				 self.lamp.setPos(tuple(light[2]))
+				 self.lamp.setPos(tuple(light_param[2]))
 				 print('Point light loaded')
 
 			elif light_param[0] == 'dl':
 				 self.typelight = DirectionalLight('dl')
 				 self.lamp = render.attachNewNode(self.typelight)
-				 self.lamp.setHpr(tuple(light[2]))
+				 self.lamp.setHpr(tuple(light_param[2]))
 				 print('Directional light loaded')
 
 			self.lights.append(self.typelight)
