@@ -1,4 +1,5 @@
 from math import pi, sin, cos
+import json
 
 #import direct.directbase.DirectStart
 
@@ -6,8 +7,8 @@ from panda3d.core import *
 from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
 from direct.actor.Actor import Actor
-from direct.interval.IntervalGlobal import Sequence
- 
+#from direct.interval.IntervalGlobal import Sequence
+
 class Character(ShowBase):
 
 	SCALE = 1
@@ -54,23 +55,57 @@ class Character(ShowBase):
 		
 class Environment(ShowBase):
 
-	SCALE = 2
-	POS = (0, 0, 0)
-	HPR = (0, 0, 0)
-	RATE = 1
-
 	def __init__(self, path):
-		#======LOAD MODEL=========================
-		self.map = loader.loadModel(path)
 		
-		#======SCALE POSITION ROTATE SET==========
-		self.map.setScale(self.SCALE, self.SCALE, self.SCALE)
-		self.map.setPos(self.POS)
-		self.map.setHpr(self.HPR)
+		self.loadmodel(path)
 
-		#======RENDER ON==========================
-		self.map.reparentTo(render)
+		self.lights = []
+		self.loadlights(path)
 
+		print("envirement loaded")
+
+	def loadmodel(sefl, path):
+
+		solid = loader.loadModel(path + 'solid.egg')
+
+		with open(path + 'data.txt', 'r') as datafile:
+			data = json.loads(datafile.read())
+
+		scale = data[0]
+		pos = data[1]
+		hpr = data[2]	
+
+		solid.setScale(tuple(scale))
+		solid.setPos(tuple(pos))
+		solid.setHpr(tuple(hpr))
+
+		solid.reparentTo(render)
+
+	def loadlights(self, path):
+
+		lights_params = []
+		with open(path + 'lights.txt', 'r') as lights_file:
+			for line in lights_file:
+				lights_params.append(json.loads(line))
+
+		for light_param in lights_params:
+
+			if   light_param[0] == 'pl':		
+				 self.typelight = PointLight('pl')
+				 self.lamp = render.attachNewNode(self.typelight)
+				 self.lamp.setPos(tuple(light[2]))
+				 print('Point light loaded')
+
+			elif light_param[0] == 'dl':
+				 self.typelight = DirectionalLight('dl')
+				 self.lamp = render.attachNewNode(self.typelight)
+				 self.lamp.setHpr(tuple(light[2]))
+				 print('Directional light loaded')
+
+			self.lights.append(self.typelight)
+
+			self.typelight.setColor(VBase4(tuple(light_param[1])))
+			render.setLight(self.lamp)
 
 class Window(ShowBase):
 
@@ -82,19 +117,12 @@ class Window(ShowBase):
 
 		self.char01 = Character(charpath)
 
-		self.plight = PointLight('pl1')
-		self.plight.setColor(VBase4(1, 1, 1, 1))
-		self.lamp = render.attachNewNode(self.plight)
-		self.lamp.setPos(0, 0, 10)
-		render.setLight(self.lamp)
-
 		self.accept('w', self.char01.walk)
 		self.accept('w-repeat', self.char01.loopwalk)
 		self.accept('w-up', self.char01.stopwalk)
 
+arenapath = r'models/arenas/arena3/'
+charpath = r'models/human/'
 
-location = r'models/arenas/arena3/arena3.egg'
-char = r'models/human/'
-
-app = Window(location, char)
+app = Window(arenapath, charpath)
 app.run()
