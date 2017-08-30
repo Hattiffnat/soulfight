@@ -62,7 +62,7 @@ class Environment(ShowBase):
 		self.lights = []
 		self.loadlights(path)
 
-		print("envirement loaded")
+		print("Envirement loaded")
 
 	def loadmodel(sefl, path):
 
@@ -87,7 +87,7 @@ class Environment(ShowBase):
 		with open(path + 'lights.txt', 'r') as lights_file:
 			for line in lights_file:
 				if line[0] == '#': continue
-				lights_params.append(json.loads(line))
+				lights_params.append(tuple(json.loads(line)))
 
 		for light_param in lights_params:
 
@@ -95,13 +95,13 @@ class Environment(ShowBase):
 				 self.typelight = PointLight('pl')
 				 self.lamp = render.attachNewNode(self.typelight)
 				 self.lamp.setPos(tuple(light_param[2]))
-				 print('Point light loaded')
+				 print('point light loaded: '+str(light_param))
 
 			elif light_param[0] == 'dl':
 				 self.typelight = DirectionalLight('dl')
 				 self.lamp = render.attachNewNode(self.typelight)
 				 self.lamp.setHpr(tuple(light_param[2]))
-				 print('Directional light loaded')
+				 print('directional light loaded: '+str(light_param))
 
 			self.lights.append(self.typelight)
 
