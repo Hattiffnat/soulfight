@@ -7,8 +7,9 @@ from panda3d.core import *
 from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
 from direct.actor.Actor import Actor
-from direct.interval.ActorInterval import ActorInterval
-from direct.interval.IntervalGlobal import Sequence
+from direct.interval.ActorInterval import *
+from direct.interval.IntervalGlobal import *
+#from direct.interval.IntervalGlobal import Sequence
 
 class Character(ShowBase):
 
@@ -27,6 +28,14 @@ class Character(ShowBase):
 			'swap' : path+'male-swap_wearpon.egg'
 			})
 
+		#======ANIMATION PLAY RATE SET============
+		self.char.setPlayRate(self.RATE, [
+			'walk_loop',
+			'walk_start_l',
+			'walk_start_r',
+			'swap',
+			])
+		
 		#======SCALE POSITION ROTATE SET==========
 		self.char.setScale(self.SCALE, self.SCALE, self.SCALE)
 		self.char.setPos(self.POS)
@@ -71,35 +80,97 @@ class Character(ShowBase):
 		#======INPUT ANIMATIONS INTERVALS=========
 		self.start_l = self.char.actorInterval(
 			'walk_start_l',
+			loop=0,
+			constrainedLoop=0,
+			duration=0.54,
+			startTime=0,
+			endTime=0.54,
+			playRate=1,
+			partName='legs',
 			)
-		
-		#======ANIMATION PLAY RATE SET============
-		self.char.setPlayRate(self.RATE, ['walk_loop', 'walk_start'])
+		self.start_r = self.char.actorInterval(
+			'walk_start_r',
+			loop=0,
+			constrainedLoop=0,
+			duration=0.54,
+			startTime=0,
+			endTime=0.54,
+			playRate=1,
+			partName='legs',
+			)
+		self.walk_step_r = self.char.actorInterval(
+			'walk_loop',
+			loop=0,
+			constrainedLoop=1,
+			duration=1.02,
+			startTime=0,
+			endTime=1.02,
+			playRate=1,
+			partName='legs',
+			)
+		self.walk_step_l = self.char.actorInterval(
+			'walk_loop',
+			loop=0,
+			constrainedLoop=1,
+			duration=1.02,
+			startTime=1.02,
+			endTime=2.04,
+			playRate=1,
+			partName='legs',
+			)
+		self.laststep = None
+		self.swap_l = self.char.actorInterval(
+			'swap',
+			loop=0,
+			constrainedLoop=0,
+			duration=0.54,
+			startTime=0,
+			endTime=0.54,
+			playRate=1,
+			partName='left_hand'
+			)
+		self.swap_r = self.char.actorInterval(
+			'swap',
+			loop=0,
+			constrainedLoop=0,
+			duration=0.54,
+			startTime=0,
+			endTime=0.54,
+			playRate=1,
+			partName='right_hand'
+			)
 
 		#======RENDER ON==========================
 		self.char.reparentTo(render)
 		print(Actor.listJoints(self.char))
 
 	def startwalk(self):
-		if self.char.getPlayRate('walk_start_l') < 0:
-			self.char.setPlayRate(self.RATE, 'walk_start_l')
-		self.char.play('walk_start_l', partName='legs')
+		self.start_l.start()
+		self.laststep = 'l'
 
 	def loopwalk(self):
-		print(self.char.getCurrentAnim())
-		anim = self.char.getCurrentAnim()
-		if anim != 'walk_start_l' and anim != 'walk_loop':
-			self.char.play('walk_loop', partName='legs')
+		if all(
+			self.start_l.isStopped(),
+			self.start_r.isStopped(),
+			self.walk_step_l.isStopped(),
+			self.walk_step_r.isStopped(),) == True :
 
+			if self.laststep == 'l':
+				self.walk_step_r.start()
+				self.laststep = 'r'
+
+			elif self.laststep == 'r':
+				self.walk_step_l.start()
+				self.laststep = 'l'
+		
 	def stopwalk(self):
-		self.char.setPlayRate(-self.RATE, 'start_walk_l')
-		self.char.play('start_walk_l', partName='legs')
-
+		print('that pretty good')
+		
 	def swap_left(self):
-		self.char.play('swap', partName='left_hand')
+		self.swap_l.start()
 
 	def swap_right(self):
-		self.char.play('swap', partName='right_hand')
+		self.swap_r.start()
 		
 class Environment(ShowBase):
 
