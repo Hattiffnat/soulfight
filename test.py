@@ -27,7 +27,7 @@ class Character(ShowBase):
 		print(Actor.listJoints(self.char))
 				
 		#======SCALE POSITION ROTATE SET==========
-		self.char.setScale(self.SCALE, self.SCALE, self.SCALE)
+		self.char.setScale(self.SCALE)
 		self.char.setPos(self.POS)
 		self.char.setHpr(self.HPR)
 
@@ -62,7 +62,7 @@ class Character(ShowBase):
 		self.fingers_r = self.char.controlJoint(None,'modelRoot','fingers_r')
 		self.bfinger_r = self.char.controlJoint(None,'modelRoot','bfinger_r')
 
-		self.upperleg_r.attach(self.stomach)
+		self.upperleg_r.attach(self.stomach, None)
 		print(Actor.listJoints(self.char))
 		#======MAKING INTERVALS===================
 		
