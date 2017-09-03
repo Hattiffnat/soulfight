@@ -23,6 +23,8 @@ class Character(ShowBase):
 		self.speed = 0
 		#======ANIMATION LIST=====================
 		self.char = Actor(path+'male.egg', {})
+
+		print(Actor.listJoints(self.char))
 				
 		#======SCALE POSITION ROTATE SET==========
 		self.char.setScale(self.SCALE, self.SCALE, self.SCALE)
@@ -60,13 +62,15 @@ class Character(ShowBase):
 		self.fingers_r = self.char.controlJoint(None,'modelRoot','fingers_r')
 		self.bfinger_r = self.char.controlJoint(None,'modelRoot','bfinger_r')
 
+		self.upperleg_r.attach(self.stomach)
+		print(Actor.listJoints(self.char))
 		#======MAKING INTERVALS===================
 		
 
 		#======RENDER ON==========================
 		self.char.reparentTo(render)
 		#print(Actor.listJoints(self.char))
-	def jointHprTask(self, task, X, start, end, t=1)
+	def jointHprTask(self, task, X, start, end, t=1):
 
 		stask = task.time
 		(xs, ys, zs) = start
@@ -82,15 +86,7 @@ class Character(ShowBase):
 		else:
 			return Task.cont
 
-
-	def startTask(self, task):
-		print('start walk')
-		print(task.time)
-		ad = task.time*10
-		self.lowerleg_l.setHpr(0, ad, 0)
-		return Task.cont
-
-	def start(self):
+	def startwalk(self):
 		self.jointHprTask(self.lowerleg_l, (0, 0, 0), (30, 30, 30), 2)
 
 	def loopwalk(self):
@@ -107,7 +103,7 @@ class Character(ShowBase):
 
 	def joints_test(self):
 		self.foot_l.setHpr(0, 30, 0)
-		self.upperleg_l.setHpr(0, 10, 0)
+		self.stomach.setHpr(0, 10, 0)
 
 	def interval_test(self):
 		print('interval_test')
@@ -178,7 +174,7 @@ class Window(ShowBase):
 
 		self.char01 = Character(charpath)
 
-		self.accept('w', self.key_w)
+		self.accept('w', self.char01.startwalk)
 		self.accept('w-up', self.char01.stopwalk)
 		self.accept('z', self.char01.swap_left)
 		self.accept('c', self.char01.swap_right)
