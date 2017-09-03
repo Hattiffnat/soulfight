@@ -20,163 +20,98 @@ class Character(ShowBase):
 
 	def __init__(self, path):
 
+		self.speed = 0
 		#======ANIMATION LIST=====================
-		self.char = Actor(path+'male.egg', {
-			'walk_loop' : path+'male-male_walk.egg',
-			'walk_start_l' : path+'male-start_walk_l.egg',
-			'walk_start_r' : path+'male-start_walk_r.egg',
-			'swap' : path+'male-swap_wearpon.egg'
-			})
-
-		#======ANIMATION PLAY RATE SET============
-		self.char.setPlayRate(self.RATE, [
-			'walk_loop',
-			'walk_start_l',
-			'walk_start_r',
-			'swap',
-			])
-		
+		self.char = Actor(path+'male.egg', {})
+				
 		#======SCALE POSITION ROTATE SET==========
 		self.char.setScale(self.SCALE, self.SCALE, self.SCALE)
 		self.char.setPos(self.POS)
 		self.char.setHpr(self.HPR)
 
-		#======MAKING SUBPARTS====================
-		self.char.makeSubpart('legs', 
-			[
-			'upperleg_l',
-			'upperleg_r',
-			'lowerleg_l',
-			'lowerleg_r',
-			'legk_l',
-			'legk_r',
-			'foot_l',
-			'foot_r',
-			'knee_l',
-			'knee_r'
-			])
-		#self.char.makeSubpart('tors', 
-		#	[
-		#	'stomach',
-		#	'chest',
-		#	])
-		self.char.makeSubpart('left_hand', 
-			[
-			'shoulder_l',
-			'elbow_l',
-			'armk_l'
-			])
-		self.char.makeSubpart('right_hand', 
-			[
-			'shoulder_r',
-			'elbow_r',
-			'armk_r'
-			])
-		self.char.makeSubpart('head', 
-			[
-			'head',
-			])
+		#======JOINTS CONTROLLERS=================
+			#torso
+		self.stomach = self.char.controlJoint(None,'modelRoot','stomach')
+		self.chest = self.char.controlJoint(None,'modelRoot','chest')
+		self.neck = self.char.controlJoint(None,'modelRoot','neck')
+		self.head = self.char.controlJoint(None,'modelRoot','head')
+		self.shoulder_l = self.char.controlJoint(None,'modelRoot','shoulder_l')
+		self.shoulder_r = self.char.controlJoint(None,'modelRoot','shoulder_r')
+			#legs
+				#left
+		self.upperleg_l = self.char.controlJoint(None,'modelRoot','upperleg_l')
+		self.lowerleg_l = self.char.controlJoint(None,'modelRoot','upperleg_l')
+		self.foot_l = self.char.controlJoint(None,'modelRoot','foot_l')
+				#right
+		self.upperleg_r = self.char.controlJoint(None,'modelRoot','upperleg_r')
+		self.lowerleg_r = self.char.controlJoint(None,'modelRoot','lowerleg_r')
+		self.foot_r = self.char.controlJoint(None,'modelRoot','foot_r')
+			#arms
+				#left
+		self.upperarm_l = self.char.controlJoint(None,'modelRoot','upperarm_l')
+		self.lowerarm_l = self.char.controlJoint(None,'modelRoot','lowerarm_l')
+		self.palm_l = self.char.controlJoint(None,'modelRoot','palm_l')
+		self.fingers_l = self.char.controlJoint(None,'modelRoot','fingers_l')
+		self.bfinger_l = self.char.controlJoint(None,'modelRoot','bfinger_l')
+				#right
+		self.upperarm_r = self.char.controlJoint(None,'modelRoot','upperarm_r')
+		self.lowerarm_r = self.char.controlJoint(None,'modelRoot','lowerarm_r')
+		self.palm_r = self.char.controlJoint(None,'modelRoot','palm_r')
+		self.fingers_r = self.char.controlJoint(None,'modelRoot','fingers_r')
+		self.bfinger_r = self.char.controlJoint(None,'modelRoot','bfinger_r')
 
-		#======INPUT ANIMATIONS INTERVALS=========
-		self.legsanims = []
-		self.start_l = self.char.actorInterval(
-			'walk_start_l',
-			loop=0,
-			constrainedLoop=0,
-			duration=0.54,
-			startTime=0,
-			endTime=0.54,
-			playRate=1,
-			partName='legs',
-			)
-		self.legsanims.append(self.start_l)
-		self.start_r = self.char.actorInterval(
-			'walk_start_r',
-			loop=0,
-			constrainedLoop=0,
-			duration=0.54,
-			startTime=0,
-			endTime=0.54,
-			playRate=1,
-			partName='legs',
-			)
-		self.legsanims.append(self.start_r)
-		self.walk_step_r = self.char.actorInterval(
-			'walk_loop',
-			loop=0,
-			constrainedLoop=1,
-			duration=1.02,
-			startTime=0,
-			endTime=1.02,
-			playRate=1,
-			partName='legs',
-			)
-		self.legsanims.append(self.walk_step_r)
-		self.walk_step_l = self.char.actorInterval(
-			'walk_loop',
-			loop=0,
-			constrainedLoop=1,
-			duration=1.02,
-			startTime=1.02,
-			endTime=2.04,
-			playRate=1,
-			partName='legs',
-			)
-		self.legsanims.append(self.walk_step_r)
-		self.laststep = None
-		self.handsanims =[]
-		self.swap_l = self.char.actorInterval(
-			'swap',
-			loop=0,
-			constrainedLoop=0,
-			duration=0.54,
-			startTime=0,
-			endTime=0.54,
-			playRate=1,
-			partName='left_hand'
-			)
-		self.handsanims.append(self.swap_l)
-		self.swap_r = self.char.actorInterval(
-			'swap',
-			loop=0,
-			constrainedLoop=0,
-			duration=0.54,
-			startTime=0,
-			endTime=0.54,
-			playRate=1,
-			partName='right_hand'
-			)
-		self.handsanims.append(self.swap_r)
+		#======MAKING INTERVALS===================
+		
 
 		#======RENDER ON==========================
 		self.char.reparentTo(render)
-		print(Actor.listJoints(self.char))
+		#print(Actor.listJoints(self.char))
+	def jointHprTask(self, task, X, start, end, t=1)
 
-	def startwalk(self):
-		self.start_l.start()
-		self.laststep = 'l'
+		stask = task.time
+		(xs, ys, zs) = start
+		(xe, ye, ze) = end
+		newx = (xe - xs)/t * task.time
+		newy = (ye - ys)/t * task.time
+		newz = (ze - zs)/t * task.time
+
+		X.setHpr(newx, newy, newz)
+
+		if task.time > (stask + t):
+			return Task.end
+		else:
+			return Task.cont
+
+
+	def startTask(self, task):
+		print('start walk')
+		print(task.time)
+		ad = task.time*10
+		self.lowerleg_l.setHpr(0, ad, 0)
+		return Task.cont
+
+	def start(self):
+		self.jointHprTask(self.lowerleg_l, (0, 0, 0), (30, 30, 30), 2)
 
 	def loopwalk(self):
-		if all(x.isStopped() for x in self.legsanims) == True :
-
-			if self.laststep == 'l':
-				self.walk_step_r.start()
-				self.laststep = 'r'
-				print(1)
-
-			elif self.laststep == 'r':
-				self.walk_step_l.start()
-				self.laststep = 'l'
-				print(2)
+		print('loop walk')
 		
 	def stopwalk(self):
-		print(3)
+		print('stop walk')
 		
 	def swap_left(self):
-		self.swap_l.start()
+		print('swap left')
 
 	def swap_right(self):
-		self.swap_r.start()
+		print('swap right')
+
+	def joints_test(self):
+		self.foot_l.setHpr(0, 30, 0)
+		self.upperleg_l.setHpr(0, 10, 0)
+
+	def interval_test(self):
+		print('interval_test')
+		self.HprInterval1.start()
 		
 class Environment(ShowBase):
 
@@ -243,11 +178,16 @@ class Window(ShowBase):
 
 		self.char01 = Character(charpath)
 
-		self.accept('w', self.char01.startwalk)
-		self.accept('w-repeat', self.char01.loopwalk)
+		self.accept('w', self.key_w)
 		self.accept('w-up', self.char01.stopwalk)
 		self.accept('z', self.char01.swap_left)
 		self.accept('c', self.char01.swap_right)
+		self.accept('j', self.char01.joints_test)
+		self.accept('i', self.char01.interval_test)
+
+	def key_w(self):
+		self.char01.start()
+		#self.taskMgr.add(self.char01.startTask, 'startwalk')
 
 arenapath = r'models/arenas/arena3/'
 charpath = r'models/human/'
