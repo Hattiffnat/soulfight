@@ -78,6 +78,7 @@ class Character(ShowBase):
 			])
 
 		#======INPUT ANIMATIONS INTERVALS=========
+		self.legsanims = []
 		self.start_l = self.char.actorInterval(
 			'walk_start_l',
 			loop=0,
@@ -88,6 +89,7 @@ class Character(ShowBase):
 			playRate=1,
 			partName='legs',
 			)
+		self.legsanims.append(self.start_l)
 		self.start_r = self.char.actorInterval(
 			'walk_start_r',
 			loop=0,
@@ -98,6 +100,7 @@ class Character(ShowBase):
 			playRate=1,
 			partName='legs',
 			)
+		self.legsanims.append(self.start_r)
 		self.walk_step_r = self.char.actorInterval(
 			'walk_loop',
 			loop=0,
@@ -108,6 +111,7 @@ class Character(ShowBase):
 			playRate=1,
 			partName='legs',
 			)
+		self.legsanims.append(self.walk_step_r)
 		self.walk_step_l = self.char.actorInterval(
 			'walk_loop',
 			loop=0,
@@ -118,7 +122,9 @@ class Character(ShowBase):
 			playRate=1,
 			partName='legs',
 			)
+		self.legsanims.append(self.walk_step_r)
 		self.laststep = None
+		self.handsanims =[]
 		self.swap_l = self.char.actorInterval(
 			'swap',
 			loop=0,
@@ -129,6 +135,7 @@ class Character(ShowBase):
 			playRate=1,
 			partName='left_hand'
 			)
+		self.handsanims.append(self.swap_l)
 		self.swap_r = self.char.actorInterval(
 			'swap',
 			loop=0,
@@ -139,6 +146,7 @@ class Character(ShowBase):
 			playRate=1,
 			partName='right_hand'
 			)
+		self.handsanims.append(self.swap_r)
 
 		#======RENDER ON==========================
 		self.char.reparentTo(render)
@@ -149,22 +157,20 @@ class Character(ShowBase):
 		self.laststep = 'l'
 
 	def loopwalk(self):
-		if all(
-			self.start_l.isStopped(),
-			self.start_r.isStopped(),
-			self.walk_step_l.isStopped(),
-			self.walk_step_r.isStopped(),) == True :
+		if all(x.isStopped() for x in self.legsanims) == True :
 
 			if self.laststep == 'l':
 				self.walk_step_r.start()
 				self.laststep = 'r'
+				print(1)
 
 			elif self.laststep == 'r':
 				self.walk_step_l.start()
 				self.laststep = 'l'
+				print(2)
 		
 	def stopwalk(self):
-		print('that pretty good')
+		print(3)
 		
 	def swap_left(self):
 		self.swap_l.start()

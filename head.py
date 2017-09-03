@@ -49,8 +49,7 @@ class Character(ShowBase):
 
 	def stopwalk(self):
 		self.start.setPlayRate(self.RATE * (-1))
-		self.start.play()
-		
+		self.start.play()		
 
 class Window(ShowBase):
 
