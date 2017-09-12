@@ -1,5 +1,8 @@
-from math import pi, sin, cos
 import json
+import random
+import sys
+import os
+import math
 
 #import direct.directbase.DirectStart
 
@@ -9,6 +12,7 @@ from direct.task import Task
 from direct.actor.Actor import Actor
 from direct.interval.ActorInterval import *
 from direct.interval.IntervalGlobal import *
+
 #from direct.interval.IntervalGlobal import Sequence
 
 class Character(ShowBase):
@@ -20,94 +24,107 @@ class Character(ShowBase):
 
 	def __init__(self, path):
 
+		self.keyRead = True
 		self.speed = 0
+		self.vector = list(self.HPR)
 		#======ANIMATION LIST=====================
-		self.char = Actor(path+'male.egg', {})
+		self.char = Actor(path+'male.egg', {
+			'walkcy_back'	: path+'male-start_walk_stop_backward_l.egg',
+			'walkcy_forw'	: path+'male-start_walk_stop_forward_l.egg',
+			'step_back'		: path+'male-step_back_r.egg',
+			'fists'			: path+'male-wrists_fist.egg',
+			'hold_arms'		: path+'male-wrists_hold_arms.egg'})
 
-		print(Actor.listJoints(self.char))
+		#print(Actor.listJoints(self.char))
 				
 		#======SCALE POSITION ROTATE SET==========
 		self.char.setScale(self.SCALE)
 		self.char.setPos(self.POS)
 		self.char.setHpr(self.HPR)
 
-		#======JOINTS CONTROLLERS=================
-			#torso
-		self.stomach = self.char.controlJoint(None,'modelRoot','stomach')
-		self.chest = self.char.controlJoint(None,'modelRoot','chest')
-		self.neck = self.char.controlJoint(None,'modelRoot','neck')
-		self.head = self.char.controlJoint(None,'modelRoot','head')
-		self.shoulder_l = self.char.controlJoint(None,'modelRoot','shoulder_l')
-		self.shoulder_r = self.char.controlJoint(None,'modelRoot','shoulder_r')
-			#legs
-				#left
-		self.upperleg_l = self.char.controlJoint(None,'modelRoot','upperleg_l')
-		self.lowerleg_l = self.char.controlJoint(None,'modelRoot','upperleg_l')
-		self.foot_l = self.char.controlJoint(None,'modelRoot','foot_l')
-				#right
-		self.upperleg_r = self.char.controlJoint(None,'modelRoot','upperleg_r')
-		self.lowerleg_r = self.char.controlJoint(None,'modelRoot','lowerleg_r')
-		self.foot_r = self.char.controlJoint(None,'modelRoot','foot_r')
-			#arms
-				#left
-		self.upperarm_l = self.char.controlJoint(None,'modelRoot','upperarm_l')
-		self.lowerarm_l = self.char.controlJoint(None,'modelRoot','lowerarm_l')
-		self.palm_l = self.char.controlJoint(None,'modelRoot','palm_l')
-		self.fingers_l = self.char.controlJoint(None,'modelRoot','fingers_l')
-		self.bfinger_l = self.char.controlJoint(None,'modelRoot','bfinger_l')
-				#right
-		self.upperarm_r = self.char.controlJoint(None,'modelRoot','upperarm_r')
-		self.lowerarm_r = self.char.controlJoint(None,'modelRoot','lowerarm_r')
-		self.palm_r = self.char.controlJoint(None,'modelRoot','palm_r')
-		self.fingers_r = self.char.controlJoint(None,'modelRoot','fingers_r')
-		self.bfinger_r = self.char.controlJoint(None,'modelRoot','bfinger_r')
-
-		self.upperleg_r.attach(self.stomach, None)
-		print(Actor.listJoints(self.char))
 		#======MAKING INTERVALS===================
-		
+		self.startI = self.char.actorInterval(
+			'walkcy_forw',
+			loop=0,
+			constrainedLoop=0,
+			startFrame=0,
+			endFrame=10,
+			playRate=1,
+			)
+		self.fistI = self.char.actorInterval(
+			'fists',
+			loop=0,
+			constrainedLoop=0,
+			startFrame=0,
+			endFrame=4,
+			playRate=1)
+
+		#======SET CAMERA POS=====================		
 
 		#======RENDER ON==========================
+
 		self.char.reparentTo(render)
-		#print(Actor.listJoints(self.char))
-	def jointHprTask(self, task, X, start, end, t=1):
 
-		stask = task.time
-		(xs, ys, zs) = start
-		(xe, ye, ze) = end
-		newx = (xe - xs)/t * task.time
-		newy = (ye - ys)/t * task.time
-		newz = (ze - zs)/t * task.time
+		taskMgr.add(self.moveTask, 'MoveTask')
+		taskMgr.add(self.spinCameraTask, "SpinCameraTask")
 
-		X.setHpr(newx, newy, newz)
+		if self.keyRead:
+			self.accept('f', self.fisttest)
+			self.accept('a', self.key_a)
+			self.accept('d', self.key_d)
+			self.accept('w', self.key_w)
+			self.accept('s', self.key_s)
 
-		if task.time > (stask + t):
-			return Task.end
+	def moveTask(self, task):
+		hpr_speed = 5
+		charHpr = newHpr = list(self.char.getHpr())
+
+		if charHpr[0] > self.vector[0]:
+			newHpr[0] = charHpr[0] - hpr_speed
+
+		elif charHpr[0] < self.vector[0]:
+			newHpr[0] = charHpr[0] + hpr_speed
+
+		self.char.setHpr(tuple(newHpr))
+
+		return task.cont
+
+	# Define a procedure to move the camera.
+	def spinCameraTask(self, task):
+		angleDegrees = task.time * 6.0
+		angleRadians = angleDegrees * (math.pi / 180.0)
+		camera.setPos(20 * math.sin(angleRadians), -20.0 * math.cos(angleRadians), 3)
+		camera.setHpr(angleDegrees, 0, 0)
+		return Task.cont
+		
+	def key_a(self):
+		self.vector[0] = 90
+
+	def key_d(self):
+		self.vector[0] = -90
+
+	def key_w(self):
+		self.vector[0] = 0
+
+	def key_s(self):
+		self.vector[0] = 180
+
+	def swapKeyRead(self):
+		if self.keyRead:
+			self.keyRead = False
+			taskMgr.remove('MoveTask')
 		else:
-			return Task.cont
+			self.keyRead = True
+			taskMgr.add(self.moveTask, 'MoveTask')
 
-	def startwalk(self):
-		self.jointHprTask(self.lowerleg_l, (0, 0, 0), (30, 30, 30), 2)
+	def fisttest(self):
+		self.fistI.start()
 
-	def loopwalk(self):
-		print('loop walk')
-		
-	def stopwalk(self):
-		print('stop walk')
-		
 	def swap_left(self):
 		print('swap left')
 
 	def swap_right(self):
 		print('swap right')
-
-	def joints_test(self):
-		self.foot_l.setHpr(0, 30, 0)
-		self.stomach.setHpr(0, 10, 0)
-
-	def interval_test(self):
-		print('interval_test')
-		self.HprInterval1.start()
 		
 class Environment(ShowBase):
 
@@ -174,16 +191,10 @@ class Window(ShowBase):
 
 		self.char01 = Character(charpath)
 
-		self.accept('w', self.char01.startwalk)
-		self.accept('w-up', self.char01.stopwalk)
-		self.accept('z', self.char01.swap_left)
-		self.accept('c', self.char01.swap_right)
-		self.accept('j', self.char01.joints_test)
-		self.accept('i', self.char01.interval_test)
+		self.accept('q', self.char01.swapKeyRead)
 
-	def key_w(self):
-		self.char01.start()
-		#self.taskMgr.add(self.char01.startTask, 'startwalk')
+
+	
 
 arenapath = r'models/arenas/arena3/'
 charpath = r'models/human/'
