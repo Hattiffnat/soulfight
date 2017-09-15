@@ -19,14 +19,18 @@ class Character(ShowBase):
 
 	SCALE = 1
 	POS = (0, 0, 0.4)
-	HPR = (-90, 0, 0)
+	HPR = (0, 0, 0)
 	RATE = 1.5
 
 	def __init__(self, path):
 
 		self.keyRead = True
 		self.speed = 0
-		self.vector = list(self.HPR)
+
+		self.keyMap = {
+            'left': False, 'right': False, 'forward': False, 'back': False,
+            'cam-left': False, 'cam-right': False, 'cam-up': False, 'cam-down': False}
+
 		#======ANIMATION LIST=====================
 		self.char = Actor(path+'male.egg', {
 			'walkcy_back'	: path+'male-start_walk_stop_backward_l.egg',
@@ -47,7 +51,6 @@ class Character(ShowBase):
 		#======MAKING SUBPARTS====================
 		self.char.makeSubpart('left_wrist', 
 			[
-			'palm_l',
 			'f_finger_1_l',
 			'f_finger_2_l',
 			'f_finger_3_l',
@@ -82,32 +85,52 @@ class Character(ShowBase):
 			playRate=1,
 			partName='left_wrist')
 
-		#======SET CAMERA POS=====================		
+		#======SET CAMERA POS, HPR================
+		base.disableMouse()
+
+		self.floater = NodePath(PandaNode("floater"))
+		self.floater.reparentTo(self.char)
+		self.floater.setPos(self.char.getPos())
+		self.floater.setZ(self.floater.getZ() + 3.5)
+
+		camera.setPos(
+			self.char.getX(),
+			self.char.getY() + 20,
+			self.char.getZ() + 10
+			)
+
+
+		self.camvec = ()
 
 		#======RENDER ON==========================
-
 		self.char.reparentTo(render)
 
+		#======TASKS LOAD=========================
 		taskMgr.add(self.moveTask, 'MoveTask')
-		taskMgr.add(self.cameraTask, "CameraTask")
+		taskMgr.add(self.cameraTask, 'CameraTask')
 
-		if self.keyRead:
-			self.accept('f', self.fisttest)
-			self.accept('a', self.key_a)
-			self.accept('d', self.key_d)
-			self.accept('w', self.key_w)
-			self.accept('s', self.key_s)
-			self.accept('h', self.fisttest)
+		#======KEYS PRESS IVENTS==================
+
+		self.accept('a', self.setKey, ['left', True])
+		self.accept('d', self.setKey, ['right', True])
+		self.accept('w', self.setKey, ['forward', True])
+		self.accept('s', self.setKey, ['back', True])
+		self.accept('arrow_left', self.setKey, ['cam-left', True])
+		self.accept('arrow_right', self.setKey, ['cam-right', True])
+		self.accept('arrow_up', self.setKey, ['cam-up', True])
+		self.accept('arrow_down', self.setKey, ['cam-down', True])
+		self.accept('a-up', self.setKey, ['left', False])
+		self.accept('d-up', self.setKey, ['right', False])
+		self.accept('w-up', self.setKey, ['forward', False])
+		self.accept('s-up', self.setKey, ['back', False])
+		self.accept('arrow_left-up', self.setKey, ['cam-left', False])
+		self.accept('arrow_right-up', self.setKey, ['cam-right', False])
+		self.accept('arrow_up-up', self.setKey, ['cam-up', False])
+		self.accept('arrow_down-up', self.setKey, ['cam-down', False])
 
 	def moveTask(self, task):
 		hpr_speed = 5
 		charHpr = newHpr = list(self.char.getHpr())
-
-		if charHpr[0] > self.vector[0]:
-			newHpr[0] = charHpr[0] - hpr_speed
-
-		elif charHpr[0] < self.vector[0]:
-			newHpr[0] = charHpr[0] + hpr_speed
 
 		self.char.setHpr(tuple(newHpr))
 
@@ -120,35 +143,25 @@ class Character(ShowBase):
 		return Task.cont
 
 	def cameraTask(self, task):
-		
-		camera.setPos(
-			self.char.getX(),
-			self.char.getY() + 5,
-			self.char.getZ() + 2
-			)
+
+		if self.keyMap['cam-left']:
+
+			print(1)
 
 
+		camera.lookAt(self.floater)
 		return Task.cont
-		
-	def key_a(self):
-		self.vector[0] = 90
 
-	def key_d(self):
-		self.vector[0] = -90
-
-	def key_w(self):
-		self.vector[0] = 0
-
-	def key_s(self):
-		self.vector[0] = 180
+	def setKey(self, key, value):
+		self.keyMap[key] = value
 
 	def swapKeyRead(self):
 		if self.keyRead:
-			self.keyRead = False
 			taskMgr.remove('MoveTask')
+			self.keyRead = False
 		else:
-			self.keyRead = True
 			taskMgr.add(self.moveTask, 'MoveTask')
+			self.keyRead = True
 
 	def fisttest(self):
 		self.fistI.start()
@@ -168,7 +181,7 @@ class Environment(ShowBase):
 		self.lights = []
 		self.loadlights(path)
 
-		print("Envirement loaded")
+		print('Envirement loaded')
 
 	def loadmodel(sefl, path):
 
