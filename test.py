@@ -35,12 +35,34 @@ class Character(ShowBase):
 			'fists'			: path+'male-wrists_fist.egg',
 			'hold_arms'		: path+'male-wrists_hold_arms.egg'})
 
-		#print(Actor.listJoints(self.char))
+		self.char.pose('walkcy_forw', 0)
+
+		print(Actor.listJoints(self.char))
 				
 		#======SCALE POSITION ROTATE SET==========
 		self.char.setScale(self.SCALE)
 		self.char.setPos(self.POS)
 		self.char.setHpr(self.HPR)
+
+		#======MAKING SUBPARTS====================
+		self.char.makeSubpart('left_wrist', 
+			[
+			'palm_l',
+			'f_finger_1_l',
+			'f_finger_2_l',
+			'f_finger_3_l',
+			'lit_finger_1_l',
+			'lit_finger_2_l',
+			'lit_finger_3_l',
+			'm_finger_1_l',
+			'm_finger_2_l',
+			'm_finger_3_l',
+			'ring_finger_1_l',
+			'ring_finger_2_l',
+			'ring_finger_3_l',
+			'thumb_1_l',
+			'thumb_2_l',
+			])
 
 		#======MAKING INTERVALS===================
 		self.startI = self.char.actorInterval(
@@ -57,7 +79,8 @@ class Character(ShowBase):
 			constrainedLoop=0,
 			startFrame=0,
 			endFrame=4,
-			playRate=1)
+			playRate=1,
+			partName='left_wrist')
 
 		#======SET CAMERA POS=====================		
 
@@ -66,7 +89,7 @@ class Character(ShowBase):
 		self.char.reparentTo(render)
 
 		taskMgr.add(self.moveTask, 'MoveTask')
-		taskMgr.add(self.spinCameraTask, "SpinCameraTask")
+		taskMgr.add(self.cameraTask, "CameraTask")
 
 		if self.keyRead:
 			self.accept('f', self.fisttest)
@@ -74,6 +97,7 @@ class Character(ShowBase):
 			self.accept('d', self.key_d)
 			self.accept('w', self.key_w)
 			self.accept('s', self.key_s)
+			self.accept('h', self.fisttest)
 
 	def moveTask(self, task):
 		hpr_speed = 5
@@ -89,12 +113,21 @@ class Character(ShowBase):
 
 		return task.cont
 
-	# Define a procedure to move the camera.
-	def spinCameraTask(self, task):
-		angleDegrees = task.time * 6.0
-		angleRadians = angleDegrees * (math.pi / 180.0)
-		camera.setPos(20 * math.sin(angleRadians), -20.0 * math.cos(angleRadians), 3)
-		camera.setHpr(angleDegrees, 0, 0)
+	def actionTask(self, task):
+
+
+
+		return Task.cont
+
+	def cameraTask(self, task):
+		
+		camera.setPos(
+			self.char.getX(),
+			self.char.getY() + 5,
+			self.char.getZ() + 2
+			)
+
+
 		return Task.cont
 		
 	def key_a(self):
