@@ -4,8 +4,6 @@ import sys
 import os
 import math
 
-#import direct.directbase.DirectStart
-
 from panda3d.core import *
 from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
@@ -13,10 +11,10 @@ from direct.actor.Actor import Actor
 from direct.interval.ActorInterval import *
 from direct.interval.IntervalGlobal import *
 
-#from direct.interval.IntervalGlobal import Sequence
+
+# from direct.interval.IntervalGlobal import Sequence
 
 class Character(ShowBase):
-
 	SCALE = 1
 	POS = (0, 0, 0.4)
 	HPR = (0, 0, 0)
@@ -28,29 +26,32 @@ class Character(ShowBase):
 		self.speed = 0
 
 		self.keyMap = {
-            'left': False, 'right': False, 'forward': False, 'back': False,
-            'cam-left': False, 'cam-right': False, 'cam-up': False, 'cam-down': False}
+			'debug': False,
+			'left': False, 'right': False, 'forward': False, 'back': False,
+			'cam-left': False, 'cam-right': False, 'cam-up': False, 'cam-down': False}
 
-		#======ANIMATION LIST=====================
-		self.char = Actor(path+'male.egg', {
-			'walkcy_back'	: path+'male-start_walk_stop_backward_l.egg',
-			'walkcy_forw'	: path+'male-start_walk_stop_forward_l.egg',
-			'step_back'		: path+'male-step_back_r.egg',
-			'fists'			: path+'male-wrists_fist.egg',
-			'hold_arms'		: path+'male-wrists_hold_arms.egg'})
+	# ======ANIMATION LIST=====================
+		self.char = Actor(path + 'male.egg', {
+			'walkcy_back': path + 'male-start_walk_stop_backward_l.egg',
+			'walkcy_forw': path + 'male-start_walk_stop_forward_l.egg',
+			'step_back': path + 'male-step_back_r.egg',
+			'fists'	: path +'male-wrists_fist.egg',
+			'hold_arms'	: path+ 'male-wrists_hold_arms.egg'})
 
 		self.char.pose('walkcy_forw', 0)
 
-		print(Actor.listJoints(self.char))
-				
-		#======SCALE POSITION ROTATE SET==========
+		#print(Actor.listJoints(self.char))
+
+	# ======SCALE, POS, HPR, TASK PARAMS=======
 		self.char.setScale(self.SCALE)
 		self.char.setPos(self.POS)
 		self.char.setHpr(self.HPR)
 
-		#======MAKING SUBPARTS====================
-		self.char.makeSubpart('left_wrist', 
-			[
+		self.WALKSPEED = 1
+		self.HSPEED = 20
+
+	# ======MAKING SUBPARTS====================
+		self.char.makeSubpart('left_wrist', [
 			'f_finger_1_l',
 			'f_finger_2_l',
 			'f_finger_3_l',
@@ -67,7 +68,7 @@ class Character(ShowBase):
 			'thumb_2_l',
 			])
 
-		#======MAKING INTERVALS===================
+	# ======MAKING INTERVALS===================
 		self.startI = self.char.actorInterval(
 			'walkcy_forw',
 			loop=0,
@@ -75,7 +76,7 @@ class Character(ShowBase):
 			startFrame=0,
 			endFrame=10,
 			playRate=1,
-			)
+		)
 		self.fistI = self.char.actorInterval(
 			'fists',
 			loop=0,
@@ -85,8 +86,11 @@ class Character(ShowBase):
 			playRate=1,
 			partName='left_wrist')
 
-		#======SET CAMERA POS, HPR================
+	# ======SET CAMERA POS, HPR, TASK PARAMS===
 		base.disableMouse()
+
+		self.camSpeedPhi = 100
+		self.camSpeedTheta = 100
 
 		self.floater = NodePath(PandaNode("floater"))
 		self.floater.reparentTo(self.char)
@@ -94,22 +98,31 @@ class Character(ShowBase):
 		self.floater.setZ(self.floater.getZ() + 3.5)
 
 		camera.setPos(
-			self.char.getX(),
-			self.char.getY() + 20,
-			self.char.getZ() + 10
-			)
+			self.floater.getX(),
+			self.floater.getY() + -25,
+			self.floater.getZ() + 7
+		)
+		self.CAMVEC = camera.getPos() - self.floater.getPos()
+		self.CAMDIST = self.CAMVEC.length()
+		self.CAMDISTMAX = self.CAMDIST + 5
+		self.CAMDISTMIN = self.CAMDIST - 5
 
+		camera.lookAt(self.floater)
+		self.camphi = camera.getH()
+		self.camtheta = camera.getP()
+		print(camera.getHpr())
 
-		self.camvec = ()
+	# ======RENDER ON==========================
 
-		#======RENDER ON==========================
 		self.char.reparentTo(render)
 
-		#======TASKS LOAD=========================
+	# ======TASKS LOAD=========================
 		taskMgr.add(self.moveTask, 'MoveTask')
 		taskMgr.add(self.cameraTask, 'CameraTask')
 
-		#======KEYS PRESS IVENTS==================
+	# ======KEYS PRESS IVENTS==================
+		self.accept('`', self.setKey, ['debug', True])
+		self.accept('`-up', self.setKey, ['debug', False])
 
 		self.accept('a', self.setKey, ['left', True])
 		self.accept('d', self.setKey, ['right', True])
@@ -129,27 +142,84 @@ class Character(ShowBase):
 		self.accept('arrow_down-up', self.setKey, ['cam-down', False])
 
 	def moveTask(self, task):
-		hpr_speed = 5
-		charHpr = newHpr = list(self.char.getHpr())
 
-		self.char.setHpr(tuple(newHpr))
+		km = self.keyMap
+
+		if km['left'] or km['right'] or km['forward'] or km['back']:
+			hdir = 1 
+			if self.char.getH() < camera.getH():
+				self.char.setH(self.char.getH() + self.HSPEED)
+			elif self.char.getH() > camera.getH():
+				self.char.setH(self.char.getH() - self.HSPEED)
+
+		if self.keyMap['debug']:
+			print(self.char.getH())
+			print(camera.getH())
 
 		return task.cont
 
 	def actionTask(self, task):
 
-
-
 		return Task.cont
 
-	def cameraTask(self, task):
+	def cameraTask2(self, task):
+		dt = globalClock.getDt()
 
 		if self.keyMap['cam-left']:
+			camera.setX(camera, -self.camSpeedX * dt)
+		if self.keyMap['cam-right']:
+			camera.setX(camera, +self.camSpeedX * dt)
 
-			print(1)
+		if self.keyMap['cam-up']:
+			camera.setZ(camera, +self.camSpeedZ * dt)
+		if self.keyMap['cam-down']:
+			camera.setZ(camera, -self.camSpeedZ * dt)
 
+		camvec = self.floater.getPos() - camera.getPos()
+		camvec.setZ(0)
+		camdist = camvec.length()
+		camvec.normalize()
+		if camdist > self.CAMDISTMAX:
+			camera.setPos(camera.getPos() + camvec * (camdist - self.CAMDISTMAX))
+			camdist = self.CAMDISTMIN
+		if camdist < self.CAMDISTMIN:
+			camera.setPos(camera.getPos() - camvec * (self.CAMDISTMIN - camdist))
+			camdist = self.CAMDISTMAX
+
+		if self.keyMap['debug']: print(camvec)
 
 		camera.lookAt(self.floater)
+
+		self.camTaskTime = task.time
+		return Task.cont
+	def cameraTask(self, task):
+		dt = globalClock.getDt()
+
+		if self.keyMap['cam-left']:
+			self.camphi -= self.camSpeedPhi * dt
+		if self.keyMap['cam-right']:
+			self.camphi += self.camSpeedPhi * dt			
+
+		if self.keyMap['cam-up']:
+			self.camtheta += self.camSpeedTheta * dt
+		if self.keyMap['cam-down']:
+			self.camtheta -= self.camSpeedTheta * dt
+
+		camvec = camera.getPos() - self.floater.getPos()
+		camdist = camvec.length()
+
+		phi = self.camphi * math.pi/180
+		theta = self.camtheta * math.pi/180
+		camera.setPos(
+			self.CAMDIST * math.sin(theta) * math.cos(phi),
+			self.CAMDIST * math.sin(theta) * math.sin(phi),
+			self.CAMDIST * math.cos(theta)
+			)
+		
+		#if self.keyMap['debug']:
+
+		camera.lookAt(self.floater)
+
 		return Task.cont
 
 	def setKey(self, key, value):
@@ -163,19 +233,10 @@ class Character(ShowBase):
 			taskMgr.add(self.moveTask, 'MoveTask')
 			self.keyRead = True
 
-	def fisttest(self):
-		self.fistI.start()
 
-	def swap_left(self):
-		print('swap left')
-
-	def swap_right(self):
-		print('swap right')
-		
 class Environment(ShowBase):
-
 	def __init__(self, path):
-		
+
 		self.loadmodel(path)
 
 		self.lights = []
@@ -192,7 +253,7 @@ class Environment(ShowBase):
 
 		scale = data[0]
 		pos = data[1]
-		hpr = data[2]	
+		hpr = data[2]
 
 		solid.setScale(tuple(scale))
 		solid.setPos(tuple(pos))
@@ -210,37 +271,35 @@ class Environment(ShowBase):
 
 		for light_param in lights_params:
 
-			if   light_param[0] == 'pl':		
-				 self.typelight = PointLight('pl')
-				 self.lamp = render.attachNewNode(self.typelight)
-				 self.lamp.setPos(tuple(light_param[2]))
-				 print('point light loaded: '+str(light_param))
+			if light_param[0] == 'pl':
+				self.typelight = PointLight('pl')
+				self.lamp = render.attachNewNode(self.typelight)
+				self.lamp.setPos(tuple(light_param[2]))
+				print('point light loaded: ' + str(light_param))
 
 			elif light_param[0] == 'dl':
-				 self.typelight = DirectionalLight('dl')
-				 self.lamp = render.attachNewNode(self.typelight)
-				 self.lamp.setHpr(tuple(light_param[2]))
-				 print('directional light loaded: '+str(light_param))
+				self.typelight = DirectionalLight('dl')
+				self.lamp = render.attachNewNode(self.typelight)
+				self.lamp.setHpr(tuple(light_param[2]))
+				print('directional light loaded: ' + str(light_param))
 
 			self.lights.append(self.typelight)
 
 			self.typelight.setColor(VBase4(tuple(light_param[1])))
 			render.setLight(self.lamp)
 
+
 class Window(ShowBase):
-
 	def __init__(self, arenapath, charpath):
-
 		ShowBase.__init__(self)
 
 		self.env = Environment(arenapath)
 
 		self.char01 = Character(charpath)
 
+		self.accept('escape', sys.exit)
 		self.accept('q', self.char01.swapKeyRead)
 
-
-	
 
 arenapath = r'models/arenas/arena3/'
 charpath = r'models/human/'
