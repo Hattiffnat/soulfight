@@ -228,6 +228,7 @@ class Character(ShowBase):
 		return Task.cont
 	def cameraTask(self, task):
 		dt = globalClock.getDt()
+		charpos = list(self.char.getPos())
 
 		if self.keyMap['cam-left']:
 			self.camphi -= self.camSpeedPhi * dt
@@ -239,19 +240,19 @@ class Character(ShowBase):
 		if self.keyMap['cam-down']:
 			self.camtheta -= self.camSpeedTheta * dt
 
-		camvec = camera.getPos() - self.floater.getPos()
-		camdist = camvec.length()
-
-		if camdist > self.CAMDIST:
-			camdist -= 1
-		if camdist < self.CAMDIST:
-			camdist += 1
-
 		phi = self.camphi * math.pi/180
 		theta = self.camtheta * math.pi/180
-		camera.setX(camdist * math.sin(theta) * math.cos(phi) - self.floater.getX())
-		camera.setY(camdist * math.sin(theta) * math.sin(phi) - self.floater.getY())
-		camera.setZ(camdist * math.cos(theta) - self.floater.getZ())
+
+		sinphi = math.sin(phi)
+		cosphi = math.cos(phi)
+		sintheta = math.sin(theta)
+		costheta = math.cos(theta)
+
+		camera.setPos(
+			charpos[0] + self.CAMDIST * sintheta * cosphi,
+			charpos[1] + self.CAMDIST * sintheta * sinphi,
+			charpos[2] + self.CAMDIST * costheta
+			)
 		
 		#if self.keyMap['debug']:
 
