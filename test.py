@@ -14,10 +14,20 @@ from direct.interval.IntervalGlobal import *
 
 # from direct.interval.IntervalGlobal import Sequence
 
+#function return coordinate quarter
+def coordquart(angle):
+
+	if angle >= 0.0 and angle < 90.0: quarter = 1
+	elif angle >= 90.0 and angle < 180.0: quarter = 2
+	elif angle >= -180.0 and angle < -90.0: quarter = 3
+	elif angle >= -90.0 and angle < 0.0: quarter = 4
+
+	return quarter
+
 class Character(ShowBase):
 	SCALE = 1
 	POS = (0, 0, 0.4)
-	HPR = (0, 0, 0)
+	HPR = (0)
 	RATE = 1.5
 
 	def __init__(self, path):
@@ -47,8 +57,8 @@ class Character(ShowBase):
 		self.char.setPos(self.POS)
 		self.char.setHpr(self.HPR)
 
-		self.WALKSPEED = 1
-		self.HSPEED = 20
+		self.WALKSPEED = 5
+		self.HSPEED = 500
 
 	# ======MAKING SUBPARTS====================
 		self.char.makeSubpart('left_wrist', [
@@ -142,19 +152,43 @@ class Character(ShowBase):
 		self.accept('arrow_down-up', self.setKey, ['cam-down', False])
 
 	def moveTask(self, task):
-
+		dt = globalClock.getDt()
 		km = self.keyMap
+		camh = camera.getH()
+		charh = self.char.getH()
+		hspeed = self.HSPEED * dt
+
+		angleh = charh
+
+		if   km['left'] and km['back']: 	angleh = camh - 45
+		elif km['right'] and km['back']: 	angleh = camh + 45
+		elif km['left'] and km['forward']: 	angleh = camh - 135
+		elif km['right'] and km['forward']: angleh = camh + 135
+		elif km['left']:	angleh = camh - 90
+		elif km['forward']:	angleh = camh + 180
+		elif km['right']:	angleh = camh + 90
+		elif km['back']:	angleh = camh
+
+		if angleh > 180:	angleh -= 360
+		if angleh < -180:	angleh += 360
+		if charh > 180:		charh -= 360
+		if charh < -180:	charh += 360
+
+		if angleh > charh: charhdir = 1
+		elif angleh < charh: charhdir = -1
+		
+		resid = abs(angleh - charh)
+		if resid > 180: charhdir *= -1
+		if hspeed > resid: hspeed = resid
+
+		if angleh != charh:
+			self.char.setH(charh + hspeed * charhdir)
 
 		if km['left'] or km['right'] or km['forward'] or km['back']:
-			hdir = 1 
-			if self.char.getH() < camera.getH():
-				self.char.setH(self.char.getH() + self.HSPEED)
-			elif self.char.getH() > camera.getH():
-				self.char.setH(self.char.getH() - self.HSPEED)
+			self.char.setY(self.char, - self.WALKSPEED * dt)
 
 		if self.keyMap['debug']:
-			print(self.char.getH())
-			print(camera.getH())
+			print(self.char.getH(), camera.getH())
 
 		return task.cont
 
@@ -166,17 +200,17 @@ class Character(ShowBase):
 		dt = globalClock.getDt()
 
 		if self.keyMap['cam-left']:
-			camera.setX(camera, -self.camSpeedX * dt)
+			camera.setX(camera, -self.camSpeedPhi * dt)
 		if self.keyMap['cam-right']:
-			camera.setX(camera, +self.camSpeedX * dt)
+			camera.setX(camera, +self.camSpeedPhi * dt)
 
 		if self.keyMap['cam-up']:
-			camera.setZ(camera, +self.camSpeedZ * dt)
+			camera.setY(camera, +self.camSpeedTheta * dt)
 		if self.keyMap['cam-down']:
-			camera.setZ(camera, -self.camSpeedZ * dt)
+			camera.setY(camera, -self.camSpeedTheta * dt)
 
 		camvec = self.floater.getPos() - camera.getPos()
-		camvec.setZ(0)
+		#camvec.setZ(0)
 		camdist = camvec.length()
 		camvec.normalize()
 		if camdist > self.CAMDISTMAX:
@@ -208,13 +242,16 @@ class Character(ShowBase):
 		camvec = camera.getPos() - self.floater.getPos()
 		camdist = camvec.length()
 
+		if camdist > self.CAMDIST:
+			camdist -= 1
+		if camdist < self.CAMDIST:
+			camdist += 1
+
 		phi = self.camphi * math.pi/180
 		theta = self.camtheta * math.pi/180
-		camera.setPos(
-			self.CAMDIST * math.sin(theta) * math.cos(phi),
-			self.CAMDIST * math.sin(theta) * math.sin(phi),
-			self.CAMDIST * math.cos(theta)
-			)
+		camera.setX(camdist * math.sin(theta) * math.cos(phi) - self.floater.getX())
+		camera.setY(camdist * math.sin(theta) * math.sin(phi) - self.floater.getY())
+		camera.setZ(camdist * math.cos(theta) - self.floater.getZ())
 		
 		#if self.keyMap['debug']:
 
