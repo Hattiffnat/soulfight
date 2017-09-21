@@ -29,6 +29,7 @@ class Character(ShowBase):
 	POS = (0, 0, 0.4)
 	HPR = (0)
 	RATE = 1.5
+	CAMDIST = 25
 
 	def __init__(self, path):
 
@@ -38,7 +39,9 @@ class Character(ShowBase):
 		self.keyMap = {
 			'debug': False,
 			'left': False, 'right': False, 'forward': False, 'back': False,
-			'cam-left': False, 'cam-right': False, 'cam-up': False, 'cam-down': False}
+			'cam-left': False, 'cam-right': False, 'cam-up': False, 'cam-down': False,
+			'cam-closer': False, 'cam-farther': False
+			}
 
 	# ======ANIMATION LIST=====================
 		self.char = Actor(path + 'male.egg', {
@@ -46,18 +49,30 @@ class Character(ShowBase):
 			'walkcy_forw': path + 'male-start_walk_stop_forward_l.egg',
 			'step_back': path + 'male-step_back_r.egg',
 			'fists'	: path +'male-wrists_fist.egg',
-			'hold_arms'	: path+ 'male-wrists_hold_arms.egg'})
+			'hold_arms'	: path + 'male-wrists_hold_arms.egg',
+			'right_arm_test_1': path + 'male-right_arm_test_1',
+			'right_arm_test_2': path + 'male-right_arm_test_2',
+			'left_arm_test': path + 'male-left_arm_test'}
+			)
 
 		self.char.pose('walkcy_forw', 0)
 
-		#print(Actor.listJoints(self.char))
+		print(Actor.listJoints(self.char))
 
 	# ======SCALE, POS, HPR, TASK PARAMS=======
 		self.char.setScale(self.SCALE)
 		self.char.setPos(self.POS)
 		self.char.setHpr(self.HPR)
 
-		self.WALKSPEED = 5
+		self.floater = NodePath(PandaNode("floater"))
+		self.floater.setPos(self.char.getPos())
+		self.floater.setZ(self.floater.getZ() + 3.5)
+
+		self.floater.reparentTo(render)
+		self.char.reparentTo(self.floater)
+		self.char.setZ(self.char.getZ() - 3.5)
+
+		self.WALKSPEED = 10
 		self.HSPEED = 500
 
 	# ======MAKING SUBPARTS====================
@@ -102,54 +117,49 @@ class Character(ShowBase):
 		self.camSpeedPhi = 100
 		self.camSpeedTheta = 100
 
-		self.floater = NodePath(PandaNode("floater"))
-		self.floater.reparentTo(self.char)
-		self.floater.setPos(self.char.getPos())
-		self.floater.setZ(self.floater.getZ() + 3.5)
-
 		camera.setPos(
-			self.floater.getX(),
-			self.floater.getY() + -25,
-			self.floater.getZ() + 7
+			self.floater.getX() + self.CAMDIST,
+			self.floater.getY(),
+			self.floater.getZ()
 		)
-		self.CAMVEC = camera.getPos() - self.floater.getPos()
-		self.CAMDIST = self.CAMVEC.length()
-		self.CAMDISTMAX = self.CAMDIST + 5
-		self.CAMDISTMIN = self.CAMDIST - 5
+		
+		self.camdist = self.CAMDIST
 
 		camera.lookAt(self.floater)
 		self.camphi = camera.getH()
 		self.camtheta = camera.getP()
-		print(camera.getHpr())
-
-	# ======RENDER ON==========================
-
-		self.char.reparentTo(render)
 
 	# ======TASKS LOAD=========================
 		taskMgr.add(self.moveTask, 'MoveTask')
 		taskMgr.add(self.cameraTask, 'CameraTask')
+		#taskMgr.add(self.actionTask, 'ActionTask')
 
 	# ======KEYS PRESS IVENTS==================
-		self.accept('`', self.setKey, ['debug', True])
-		self.accept('`-up', self.setKey, ['debug', False])
+		self.accept('`', self.setKey,		['debug', True])
+		self.accept('`-up', self.setKey,	['debug', False])
 
-		self.accept('a', self.setKey, ['left', True])
-		self.accept('d', self.setKey, ['right', True])
-		self.accept('w', self.setKey, ['forward', True])
-		self.accept('s', self.setKey, ['back', True])
-		self.accept('arrow_left', self.setKey, ['cam-left', True])
-		self.accept('arrow_right', self.setKey, ['cam-right', True])
-		self.accept('arrow_up', self.setKey, ['cam-up', True])
-		self.accept('arrow_down', self.setKey, ['cam-down', True])
-		self.accept('a-up', self.setKey, ['left', False])
-		self.accept('d-up', self.setKey, ['right', False])
-		self.accept('w-up', self.setKey, ['forward', False])
-		self.accept('s-up', self.setKey, ['back', False])
-		self.accept('arrow_left-up', self.setKey, ['cam-left', False])
-		self.accept('arrow_right-up', self.setKey, ['cam-right', False])
-		self.accept('arrow_up-up', self.setKey, ['cam-up', False])
-		self.accept('arrow_down-up', self.setKey, ['cam-down', False])
+		self.accept('a', self.setKey,		['left', True])
+		self.accept('d', self.setKey,		['right', True])
+		self.accept('w', self.setKey,		['forward', True])
+		self.accept('s', self.setKey,		['back', True])
+		self.accept('a-up', self.setKey,	['left', False])
+		self.accept('d-up', self.setKey,	['right', False])
+		self.accept('w-up', self.setKey,	['forward', False])
+		self.accept('s-up', self.setKey,	['back', False])
+
+		self.accept('arrow_left', self.setKey,		['cam-left', True])
+		self.accept('arrow_right', self.setKey,		['cam-right', True])
+		self.accept('arrow_up', self.setKey,		['cam-up', True])
+		self.accept('arrow_down', self.setKey,		['cam-down', True])
+		self.accept('arrow_left-up', self.setKey,	['cam-left', False])
+		self.accept('arrow_right-up', self.setKey,	['cam-right', False])
+		self.accept('arrow_up-up', self.setKey,		['cam-up', False])
+		self.accept('arrow_down-up', self.setKey,	['cam-down', False])
+
+		self.accept('[', self.setKey,		['cam-closer', True])
+		self.accept(']', self.setKey,		['cam-farther', True])
+		self.accept('[-up', self.setKey,	['cam-closer', False])
+		self.accept(']-up', self.setKey,	['cam-farther', False])
 
 	def moveTask(self, task):
 		dt = globalClock.getDt()
@@ -157,6 +167,7 @@ class Character(ShowBase):
 		camh = camera.getH()
 		charh = self.char.getH()
 		hspeed = self.HSPEED * dt
+		dirmapON = km['left'] or km['right'] or km['forward'] or km['back']
 
 		angleh = charh
 
@@ -171,28 +182,39 @@ class Character(ShowBase):
 
 		if angleh > 180:	angleh -= 360
 		if angleh < -180:	angleh += 360
+		anglehrad = angleh * math.pi / 180
+
 		if charh > 180:		charh -= 360
 		if charh < -180:	charh += 360
 
+		resid = abs(angleh - charh)
+
 		if angleh > charh: charhdir = 1
 		elif angleh < charh: charhdir = -1
-		
-		resid = abs(angleh - charh)
 		if resid > 180: charhdir *= -1
+
 		if hspeed > resid: hspeed = resid
+
+		if dirmapON:
+			self.floater.setX(self.floater.getX() + dt * self.WALKSPEED * math.sin(anglehrad))
+			self.floater.setY(self.floater.getY() - dt * self.WALKSPEED * math.cos(anglehrad))
 
 		if angleh != charh:
 			self.char.setH(charh + hspeed * charhdir)
 
-		if km['left'] or km['right'] or km['forward'] or km['back']:
-			self.char.setY(self.char, - self.WALKSPEED * dt)
+		#animations
+		if dirmapON:
+			self.char.play('walkcy_forw')
 
-		if self.keyMap['debug']:
-			print(self.char.getH(), camera.getH())
+		#if self.keyMap['debug']:
+		#	print(self.char.getH(), camera.getH())
 
 		return task.cont
 
 	def actionTask(self, task):
+		if self.keyMap['debug']:
+			self.char.play('right_arm_test_1')
+			self.char.play('right_arm_test_2')
 
 		return Task.cont
 
@@ -227,18 +249,25 @@ class Character(ShowBase):
 		self.camTaskTime = task.time
 		return Task.cont
 	def cameraTask(self, task):
+
 		dt = globalClock.getDt()
-		charpos = list(self.char.getPos())
+		floaterpos = list(self.floater.getPos())
 
 		if self.keyMap['cam-left']:
-			self.camphi -= self.camSpeedPhi * dt
+			self.camphi += self.camSpeedPhi * dt
 		if self.keyMap['cam-right']:
-			self.camphi += self.camSpeedPhi * dt			
+			self.camphi -= self.camSpeedPhi * dt			
 
-		if self.keyMap['cam-up']:
+		if self.keyMap['cam-up'] and self.camtheta < 179:
 			self.camtheta += self.camSpeedTheta * dt
-		if self.keyMap['cam-down']:
+		if self.keyMap['cam-down'] and self.camtheta > 1:
 			self.camtheta -= self.camSpeedTheta * dt
+
+		if self.camphi > 180: self.camphi -= 360
+		elif self.camphi < -180: self.camphi += 360
+
+		if self.keyMap['cam-closer']: self.camdist -= self.camSpeedPhi * dt
+		if self.keyMap['cam-farther']: self.camdist += self.camSpeedPhi * dt
 
 		phi = self.camphi * math.pi/180
 		theta = self.camtheta * math.pi/180
@@ -249,14 +278,14 @@ class Character(ShowBase):
 		costheta = math.cos(theta)
 
 		camera.setPos(
-			charpos[0] + self.CAMDIST * sintheta * cosphi,
-			charpos[1] + self.CAMDIST * sintheta * sinphi,
-			charpos[2] + self.CAMDIST * costheta
+			floaterpos[0] + self.camdist * sintheta * cosphi,
+			floaterpos[1] + self.camdist * sintheta * sinphi,
+			floaterpos[2] + self.camdist * costheta
 			)
 		
-		#if self.keyMap['debug']:
-
 		camera.lookAt(self.floater)
+
+		#if self.keyMap['debug']:
 
 		return Task.cont
 
