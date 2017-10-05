@@ -11,9 +11,6 @@ from direct.actor.Actor import Actor
 from direct.interval.ActorInterval import *
 from direct.interval.IntervalGlobal import *
 
-
-# from direct.interval.IntervalGlobal import Sequence
-
 #function return coordinate quarter
 def coordquart(angle):
 
@@ -44,20 +41,28 @@ class Character(ShowBase):
 			}
 
 	# ======ANIMATION LIST=====================
-		self.char = Actor(path + 'male.egg', {
-			'walkcy_back': path + 'male-start_walk_stop_backward_l.egg',
-			'walkcy_forw': path + 'male-start_walk_stop_forward_l.egg',
-			'step_back': path + 'male-step_back_r.egg',
-			'fists'	: path +'male-wrists_fist.egg',
-			'hold_arms'	: path + 'male-wrists_hold_arms.egg',
-			'right_arm_test_1': path + 'male-right_arm_test_1',
-			'right_arm_test_2': path + 'male-right_arm_test_2',
-			'left_arm_test': path + 'male-left_arm_test'}
-			)
+		self.char = Actor({
+			'torso-legs': path + 'torso_legs.egg',
+			'left-hand': path + 'left_hand.egg'
+			},{
+			'torso-legs':{
+				'walkcy-f': path + 'torso_legs-walkcy_forward_l.egg',
+				'walkcy-b': path + 'torso_legs-walkcy_backwars_l.egg',
+				'step-b': path + 'torso_legs-step_back_r.egg'
+				},
+			'left-hand':{
+				'walkcy-f': path + 'left_hand-walkcy_forward_l.egg',
+				'walkcy-b': path + 'left_hand-walkcy_backwars_l.egg',
+				'step-b': path + 'left_hand-step_back_r.egg',
+				'swap-pocket': path + 'left_hand-swap_pocket_l.egg',
+				'hold-wearpon': path + 'left_hand-wrist_hold_arms.egg',
+				'fist': path + 'left_hand-wrist_fist.egg'
+				},
+			})
 
-		self.char.pose('walkcy_forw', 0)
+		self.char.pose('walkcy-f', 0)
 
-		print(Actor.listJoints(self.char))
+		#print(Actor.listJoints(self.char))
 
 	# ======SCALE, POS, HPR, TASK PARAMS=======
 		self.char.setScale(self.SCALE)
@@ -76,23 +81,7 @@ class Character(ShowBase):
 		self.HSPEED = 500
 
 	# ======MAKING SUBPARTS====================
-		self.char.makeSubpart('left_wrist', [
-			'f_finger_1_l',
-			'f_finger_2_l',
-			'f_finger_3_l',
-			'lit_finger_1_l',
-			'lit_finger_2_l',
-			'lit_finger_3_l',
-			'm_finger_1_l',
-			'm_finger_2_l',
-			'm_finger_3_l',
-			'ring_finger_1_l',
-			'ring_finger_2_l',
-			'ring_finger_3_l',
-			'thumb_1_l',
-			'thumb_2_l',
-			])
-
+	
 	# ======MAKING INTERVALS===================
 		self.startI = self.char.actorInterval(
 			'walkcy_forw',
@@ -203,11 +192,11 @@ class Character(ShowBase):
 			self.char.setH(charh + hspeed * charhdir)
 
 		#animations
-		if dirmapON:
-			self.char.play('walkcy_forw')
+		#if dirmapON: self.char.play('walkcy_forw')
 
-		#if self.keyMap['debug']:
-		#	print(self.char.getH(), camera.getH())
+		if self.keyMap['debug']:
+			self.char.play('walkcy-f', 'torso-legs')
+			self.char.play('walkcy-f', 'left-hand')
 
 		return task.cont
 

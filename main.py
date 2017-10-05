@@ -43,7 +43,7 @@ class Character(ShowBase):
 	# ======ANIMATION LIST=====================
 		self.char = Actor(path + 'male.egg', {
 			'walkcy_back': path + 'male-start_walk_stop_backward_l.egg',
-			'walkcy_forw': path + 'male-start_walk_stop_forward_l.egg',
+			'walkcy_forw': 'start_walk_stop_forward_l',
 			'step_back': path + 'male-step_back_r.egg',
 			'fists'	: path +'male-wrists_fist.egg',
 			'hold_arms'	: path + 'male-wrists_hold_arms.egg',
@@ -72,6 +72,15 @@ class Character(ShowBase):
 		self.HSPEED = 500
 
 	# ======MAKING SUBPARTS====================
+		self.char.makeSubpart('legs', [
+		#	'upperleg_l',
+			'lowerleg_l',
+			'foot_l',
+		#	'upperleg_r',
+			'lowerleg_r',
+			'foot_r',
+			])
+
 		self.char.makeSubpart('torso', [
 			'stomach',
 			'chest'
@@ -91,14 +100,6 @@ class Character(ShowBase):
 			'ring_finger_3_l',
 			'thumb_1_l',
 			'thumb_2_l',
-			])
-		self.char.makeSubpart('legs', [
-			'upperleg_l',
-			'lowerleg_l',
-			'foot_l',
-			'upperleg_r',
-			'lowerleg_r',
-			'foot_r',
 			])
 
 	# ======MAKING INTERVALS===================
@@ -214,11 +215,7 @@ class Character(ShowBase):
 		#if dirmapON: self.char.play('walkcy_forw')
 
 		if self.keyMap['debug']:
-			self.char.enableBlend()
-			self.char.setControlEffect('swap_pocket_r', 1)
-			self.char.setControlEffect('swap_pocket_l', 1)
-			self.char.play('swap_pocket_r')
-			self.char.play('swap_pocket_l')
+			self.char.play('start_walk_stop_forward_l')
 
 		return task.cont
 
